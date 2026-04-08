@@ -9,7 +9,7 @@ COPY ./package.json ./app.js ./
 
 RUN npm install --production
 
-RUN groupadd -g 1001 -S appgroup && useradd -u 1001 -S -G appgroup appuser
+RUN addgroup -g 1001 -S appgroup && adduser -u 1001 -S -G appgroup appuser
 
 COPY --chown=appuser:appgroup ./app.js ./
 

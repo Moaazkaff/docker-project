@@ -1,0 +1,31 @@
+# Build stage
+
+FROM  golang:1.25-alpine AS builder
+
+
+WORKDIR /work
+
+COPY go.mod  ./
+
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux  go build -v -o server main.go
+
+# Runtime stage
+
+FROM alpine:latest
+
+WORKDIR /app
+
+COPY --from=builder /work/server .
+
+RUN addgroup -g 1001 -S gogroup && adduser -u 1001 -S -G gogroup gouser
+
+RUN chown -R gouser:gogroup /app
+
+USER gouser
+
+CMD [ "./server" ]
+
