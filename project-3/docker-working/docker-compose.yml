@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  frontend:
+    image: nginx:latest
+    volumes:
+      - ./App/frontend/:/usr/share/nginx/html
+      - ./nginx.config:/etc/nginx/nginx.conf 
+    networks:
+      - front
+    container_name: frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+  backend:
+    build:
+      context: .
+    container_name: backend
+    networks:
+      - back
+      - front
+    ports:
+      - "8080:8080"
+    volumes:
+      - net-APP:/app
+    depends_on:
+      database:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    environment:
+      - DB_HOST=database
+      - DB_USER=user
+      - DB_PASSWORD=userpassword
+      - DB_NAME=mydb
+  
+  database:
+    image: mysql:latest
+    container_name: db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: user
+      MYSQL_PASSWORD: userpassword
+      MYSQL_DATABASE: mydb
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - back
+
+networks:
+  front:
+  back:
+    internal: true
+
+volumes:
+  net-APP:
